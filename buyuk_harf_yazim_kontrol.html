@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Büyük Harflerin Yazımı – Hangisi Doğru?</title>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background:#eef1f7;
+        display:flex;
+        justify-content:center;
+        padding:20px;
+        margin:0;
+    }
+    .app {
+        max-width:720px;
+        width:100%;
+        background:white;
+        padding:20px;
+        border-radius:14px;
+        box-shadow:0 6px 22px rgba(0,0,0,0.1);
+    }
+    .hidden { display:none; }
+    h1 { margin-top:0; }
+    .option {
+        background:#f4f6ff;
+        padding:14px;
+        border-radius:10px;
+        border:1px solid #d9ddff;
+        cursor:pointer;
+        margin-bottom:12px;
+        font-size:16px;
+    }
+    .option:hover { background:#e9edff; }
+    .target { font-weight:bold; }
+    .correct { color:#0a7a32 !important; }
+    .wrong { color:#c62828 !important; }
+    .btn {
+        background:#3b82f6;
+        color:white;
+        border:none;
+        padding:10px 18px;
+        border-radius:999px;
+        cursor:pointer;
+        margin-top:10px;
+        margin-right:10px;
+        font-size:15px;
+    }
+    .btn:hover { background:#2563eb; }
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<!-- ANA SAYFA -->
+<div id="home">
+    <h1>Büyük Harflerin Yazımı</h1>
+    <p>Her soruda <strong>doğru yazılmış</strong> cümleyi seç.</p>
+    <button class="btn" onclick="start()">Başla</button>
+</div>
+
+<!-- SORU EKRANI -->
+<div id="quiz" class="hidden">
+    <h1>Hangisi Doğru?</h1>
+    <div id="status"></div>
+    <div id="options"></div>
+
+    <button id="muteBtn" class="btn" style="background:#777;" onclick="toggleMute()">🔊 Sesi Kapat</button>
+    <button class="btn" style="background:#444;" onclick="goHome()">Ana Sayfa</button>
+</div>
+
+<!-- SONUÇ -->
+<div id="result" class="hidden">
+    <h1>Set Tamamlandı</h1>
+    <div id="report"></div>
+
+    <button class="btn" onclick="retryWrongs()">Yanlışları Tekrar Çöz</button>
+    <button class="btn" onclick="nextSet()">Sonraki Set</button>
+    <button class="btn" style="background:#444;" onclick="goHome()">Ana Sayfa</button>
+</div>
+
+</div>
+
+<script>
+/* ---------------------------------------------------
+   SES: Web Audio API (her zaman çalışır)
+--------------------------------------------------- */
+let muted = false;
+let audioCtx = null;
+
+function initAudio() {
+    if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AC();
+    }
+}
+
+function beep(freq, duration) {
+    if (muted) return;
+    initAudio();
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.frequency.value = freq;
+    osc.type = "sine";
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    osc.start(now);
+    osc.stop(now + duration);
+}
+
+function playDing() { beep(880, 0.15); }
+function playDong() { beep(220, 0.20); }
+
+/* ---------------------------------------------------
+   TÜM DOĞRU VE YANLIŞ CÜMLELER
+--------------------------------------------------- */
+
+const correctList = [
+"<b>Zeynep Hanım</b> bir şey bilmediğini söyledi.",
+"Konya, <b>İç Anadolu’da</b> bulunur.",
+"Bu fareyi <b>Minnoş’tan</b> başkası yakalayamaz.",
+"<b>İstanbul Boğazı’ndan</b> gemiler geçti.",
+"<b>Türk Dili dergisine</b> abone olacakmış.",
+"Ben <b>20 Mayıs 1990 Pazar günü</b> dünyaya gelmişim.",
+"<b>İzmir’in kuzeyine</b> kar geliyormuş.",
+"İnsanlar, <b>Doğu felsefesine</b> ilgi duyuyor.",
+"Dün ilk defa <b>Ankara kedisi</b> gördüm.",
+"<b>Tuz Gölü</b> en büyük gölümüzdür.",
+"TBMM her yıl <b>1 Ekim’de</b> toplanır.",
+"<b>Erzurum Kalesi</b> görülmeye değer bir yerdir.",
+"<b>Beşiktaş Meydanı’nda</b> eylem yapıldı.",
+"<b>Türk Hava Yolları</b> bu yıl çok kâr etti.",
+"Okullar <b>eylülün</b> ikinci haftası açılır.",
+"Evimiz <b>Atatürk Caddesi’nde</b> bulunuyor.",
+"<b>30 Haziran Cumartesi</b> günü bize gelmişti.",
+"Kaza, <b>Antalya ili</b> sınırları içinde olmuş.",
+"<b>Mars da Jüpiter de</b> kendi yörüngesindedir.",
+"<b>Ay, Dünya’nın</b> uydusudur.",
+"<b>İsmail Çavuş</b> birçok savaşa katılmış.",
+"Bu yıl <b>Kasım’ın 15’inde</b> gelecekmiş Fransa’dan.",
+"<b>Gümüşhane ilçesine</b> gelen turistler gittiler.",
+"Tabelada <b>“Metro Durağı”</b> yazılıydı.",
+"<b>Güneydoğu Anadolu’ya</b> kar çoktan yağmış.",
+"<b>Isparta Gül Festivali</b> 10 Temmuz’da başlayacak.",
+"Bugün <b>Doktor Burak Bey</b> raporluymuş.",
+"<b>Mehmet Efendi</b> toplantıyı hızlıca terk etti.",
+"<b>Gazi Ortaokulu’nda</b> okuyorum.",
+"<b>Dicle Nehri</b>, türkülere konu olmuştur."
+];
+
+const wrongList = [
+"<b>Vali Murat bey</b> henüz gelmedi.",
+"Geçen hafta sizin pastanede <b>Maraş Dondurması</b> yedik.",
+"<b>\"Kuyucaklı Yusuf\"</b> Romanını okudun mu?",
+"Yörükler, <b>Akdeniz’in Güney’ind</b>e yaşıyor.",
+"Seni <b>Hasan Amcam</b> soruyordu.",
+"<b>Kayseri Pastırması</b> oldukça kaliteli.",
+"Önümüzdeki hafta <b>Çarşamba günü</b> görüşürüz.",
+"<b>“Babalar günü”</b> diye bir gün ne zamandan beri kutlanıyor?",
+"<b>Ali Dayım’a</b> çay içmeye gideceğiz.",
+"Burada <b>15 Ocak pazartesi Günü</b> tören varmış.",
+"Markette <b>Hürriyet Gazetesi</b> kalmamış.",
+"Onun da <b>Dünya kadar</b> işi varmış.",
+"Dün <b>avukat Serkan Bey'i</b> gördüm.",
+"Pastanın üzerine <b>Hindistan Cevizi</b> koymuş.",
+"Arkadaşım, <b>Güler sokakta</b> beni bekliyor.",
+"<b>Afyon Lokumu</b> çok lezzetli olur.",
+"Onlar her <b>Perşembe</b> yemeği bizim evde yerler.",
+"Ben de bu yıl <b>Ağustos’ta</b> tatile çıkacağım.",
+"<b>Türk Milleti</b> gerçekten çalışkandır.",
+"<b>İzmir’in Kuzeyinde</b> plansız yapılaşma var.",
+"<b>Kurban bayramında</b> çok para toplamış.",
+"<b>Fatma nine</b>, Kurtuluş Savaşı’nda savaşmış.",
+"<b>Ağrı dağı</b>, ihtişamıyla karşımızda duruyor.",
+"Onunla <b>20 Eylül 2018 salı</b> günü tanıştık.",
+"<b>Akçakoca Köyü’nde</b> iki kişi kaybolmuş.",
+"Odası hiç <b>Güneş</b> almayan cephedeymiş.",
+"En küçük gezegen <b>Plüton Gezegeni’ymiş</b>.",
+"<b>23 nisan 1920’te</b> Ankara’da Büyük Millet Meclisi açıldı.",
+"<b>Taşköprü Sarımsağı</b> çok kaliteli bir sarımsaktır.",
+"<b>Amasya Elması</b> yurt dışına gönderilmeye başlanmış."
+];
+
+/* ---------------------------------------------------
+   30 DOĞRU + 30 YANLIŞ → 30 SORU
+--------------------------------------------------- */
+
+let pairs = []; // {correct, wrong}
+
+for (let i = 0; i < 30; i++) {
+    pairs.push([
+        { text: correctList[i], correct: true },
+        { text: wrongList[i], correct: false }
+    ]);
+}
+
+/* ---------------------------------------------------
+   SORU HAVUZUNU KARISTIR VE SETLERE AYIR
+--------------------------------------------------- */
+
+let sets = [];
+let currentSet = 0;
+let index = 0;
+let wrongs = [];
+
+function createSets() {
+    const shuffled = [...pairs].sort(() => Math.random() - 0.5);
+
+    sets = [];
+    for (let i = 0; i < shuffled.length; i += 8) {
+        sets.push(shuffled.slice(i, i + 8));
+    }
+}
+
+/* ---------------------------------------------------
+   BAŞLAT
+--------------------------------------------------- */
+
+function start() {
+    document.getElementById("home").classList.add("hidden");
+    document.getElementById("quiz").classList.remove("hidden");
+
+    createSets();
+    currentSet = 0;
+    startSet();
+}
+
+function startSet() {
+    index = 0;
+    wrongs = [];
+    renderQuestion();
+}
+
+/* ---------------------------------------------------
+   SORU GÖSTER
+--------------------------------------------------- */
+
+function renderQuestion() {
+    const set = sets[currentSet];
+    if (!set || index >= set.length) return finishSet();
+
+    const pair = set[index];
+    document.getElementById("status").innerHTML =
+        `Soru ${index + 1} / ${set.length}`;
+
+    const box = document.getElementById("options");
+    box.innerHTML = "";
+
+    const mixed = [...pair].sort(() => Math.random() - 0.5);
+
+    mixed.forEach(opt => {
+        const div = document.createElement("div");
+        div.className = "option";
+        div.innerHTML = opt.text;
+        div.onclick = () => handleAnswer(div, opt);
+        box.appendChild(div);
+    });
+}
+
+/* ---------------------------------------------------
+   CEVAP
+--------------------------------------------------- */
+
+function handleAnswer(div, opt) {
+    const target = div.querySelector(".target") || div;
+
+    if (opt.correct) {
+        div.classList.add("correct");
+        playDing();
+        setTimeout(() => { index++; renderQuestion(); }, 1000);
+    } else {
+        div.classList.add("wrong");
+        wrongs.push(opt);
+        playDong();
+
+        const correct = sets[currentSet][index].find(o => o.correct);
+
+        setTimeout(() => {
+            const opts = document.querySelectorAll(".option");
+            opts.forEach(o => {
+                if (o.innerHTML === correct.text) {
+                    o.classList.add("correct");
+                }
+            });
+
+            setTimeout(() => { index++; renderQuestion(); }, 1000);
+
+        }, 1000);
+    }
+}
+
+/* ---------------------------------------------------
+   SET SONU
+--------------------------------------------------- */
+
+function finishSet() {
+    document.getElementById("quiz").classList.add("hidden");
+    document.getElementById("result").classList.remove("hidden");
+
+    const total = sets[currentSet].length;
+    const wrongCount = wrongs.length;
+    const correctCount = total - wrongCount;
+
+    document.getElementById("report").innerHTML = `
+        <p><strong>Toplam soru:</strong> ${total}</p>
+        <p><strong>Doğru sayısı:</strong> ${correctCount}</p>
+        <p><strong>Yanlış sayısı:</strong> ${wrongCount}</p>
+        <p><strong>Başarı yüzdesi:</strong> %${Math.round((correctCount / total) * 100)}</p>
+    `;
+}
+
+/* ---------------------------------------------------
+   BUTONLAR
+--------------------------------------------------- */
+
+function retryWrongs() {
+    if (wrongs.length === 0) {
+        alert("Tüm sorular doğru 🎉");
+        return;
+    }
+
+    let mini = [];
+    wrongs.forEach(w => {
+        pairs.forEach(p => {
+            if (p.includes(w)) mini.push(p);
+        });
+    });
+
+    sets[currentSet] = mini;
+
+    document.getElementById("result").classList.add("hidden");
+    document.getElementById("quiz").classList.remove("hidden");
+
+    startSet();
+}
+
+function nextSet() {
+    currentSet++;
+
+    if (currentSet >= sets.length) {
+        alert("Tüm setler bitti 💛 Yeni cümle eklemek istersen hemen yaparım.");
+        currentSet = 0;
+    }
+
+    document.getElementById("result").classList.add("hidden");
+    document.getElementById("quiz").classList.remove("hidden");
+
+    startSet();
+}
+
+function toggleMute() {
+    muted = !muted;
+    document.getElementById("muteBtn").textContent =
+        muted ? "🔇 Ses Aç" : "🔊 Sesi Kapat";
+}
+
+function goHome() {
+    document.getElementById("quiz").classList.add("hidden");
+    document.getElementById("result").classList.add("hidden");
+    document.getElementById("home").classList.remove("hidden");
+}
+
+</script>
+
+</body>
+</html>

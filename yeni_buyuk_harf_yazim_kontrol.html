@@ -102,13 +102,41 @@
     .status-badge {
         background: #1e466e;
         color: #ffe8c7;
-        display: inline-block;
-        padding: 6px 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 24px;
         border-radius: 40px;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         font-weight: bold;
         margin-bottom: 25px;
         letter-spacing: 0.5px;
+        flex-wrap: wrap;
+    }
+
+    /* soru numarası ve "HANGİSİ DOĞRU?" metni için özel stil */
+    .question-header {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 12px;
+        background: #1e466e;
+        padding: 8px 24px;
+        border-radius: 40px;
+        color: #ffe8c7;
+        font-weight: bold;
+    }
+
+    .question-count {
+        font-size: 1rem;
+    }
+
+    .question-label {
+        font-size: 1rem;
+        background: #ffc107;
+        color: #2c2b26;
+        padding: 4px 14px;
+        border-radius: 30px;
+        letter-spacing: 1px;
     }
 
     /* seçenekler — büyük butonlar, rahat okuma */
@@ -225,6 +253,10 @@
             padding: 10px 18px;
             font-size: 0.85rem;
         }
+        .question-header {
+            flex-wrap: wrap;
+            gap: 8px;
+        }
     }
 </style>
 </head>
@@ -251,11 +283,15 @@
     <!-- SORU EKRANI (QUİZ) -->
     <div id="quiz" class="hidden">
         <div class="card-panel" style="background: #fffcf2;">
-            <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap;">
-                <div class="status-badge" id="status">Soru 0 / 0</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+                <!-- SORU NUMARASI YANINDA "HANGİSİ DOĞRU?" YAZISI -->
+                <div class="question-header">
+                    <span class="question-count" id="statusText">Soru 0 / 0</span>
+                    <span class="question-label">📝 HANGİSİ DOĞRU?</span>
+                </div>
                 <button id="muteBtn" class="btn btn-mute" style="margin:0;" onclick="toggleMute()">🔊 Sesi Kapat</button>
             </div>
-            <div id="options" style="margin-top: 20px;"></div>
+            <div id="options" style="margin-top: 5px;"></div>
             <div class="flex-btns">
                 <button class="btn btn-secondary" onclick="goHome()">🏠 Ana Sayfa</button>
             </div>
@@ -394,8 +430,8 @@ for (let i = 0; i < 30; i++) {
 let sets = [];         // her set = soru dizisi ( her soru = [doğru, yanlış] )
 let currentSet = 0;
 let currentIndex = 0;
-let currentWrongs = [];   // yanlış yapılan soru objeleri (soru dizisi, hangi cümle? yanlış seçilen opsiyon)
-let currentSetQuestions = []; // set içindeki sorular (pair array)
+let currentWrongs = [];   // yanlış yapılan soru objeleri (soru dizisi)
+let currentSetQuestions = [];
 let waitingFlag = false;
 
 /* ---------------------------------------------------
@@ -427,7 +463,6 @@ function start() {
 
 function loadSet() {
     if (currentSet >= sets.length) {
-        // tüm setler bitmişse başa dön ama bildir
         alert("🎉 Tüm setleri tamamladınız! Ana menüden tekrar başlayabilirsiniz.");
         goHome();
         return;
@@ -443,13 +478,17 @@ function renderCurrentQuestion() {
         finishCurrentSet();
         return;
     }
-    const pair = currentSetQuestions[currentIndex];
     const total = currentSetQuestions.length;
-    document.getElementById("status").innerHTML = `📌 Soru ${currentIndex + 1} / ${total}`;
+    // statusText elementini güncelle (soru numarası)
+    const statusSpan = document.getElementById("statusText");
+    if (statusSpan) {
+        statusSpan.innerHTML = `📌 Soru ${currentIndex + 1} / ${total}`;
+    }
     
     const optionsDiv = document.getElementById("options");
     optionsDiv.innerHTML = "";
     
+    const pair = currentSetQuestions[currentIndex];
     // karıştır doğru/yanlış sırası
     const shuffled = [...pair];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -471,7 +510,6 @@ function handleAnswer(clickedDiv, selectedOption, originalPair) {
     waitingFlag = true;
     
     if (selectedOption.correct) {
-        // doğru cevap
         clickedDiv.classList.add("correct");
         playDing();
         setTimeout(() => {
@@ -480,13 +518,10 @@ function handleAnswer(clickedDiv, selectedOption, originalPair) {
             renderCurrentQuestion();
         }, 700);
     } else {
-        // yanlış cevap
         clickedDiv.classList.add("wrong");
         playDong();
-        // Yanlış yapılan soruyu kaydet (sorunun kendisini)
         currentWrongs.push(originalPair);
         
-        // Doğru cevabı bul ve işaretle
         const correctOption = originalPair.find(opt => opt.correct === true);
         let correctDiv = null;
         const allOptions = document.querySelectorAll(".option");
@@ -538,7 +573,6 @@ function retryWrongs() {
         alert("✨ Hiç yanlışın yok! Yeni sete geçebilirsin.");
         return;
     }
-    // mevcut seti yanlış yapılan sorularla değiştir
     const newSet = [...currentWrongs];
     if (newSet.length === 0) return;
     sets[currentSet] = newSet;
@@ -554,7 +588,6 @@ function retryWrongs() {
 function nextSet() {
     currentSet++;
     if (currentSet >= sets.length) {
-        // yeni set yoksa yeni set havuzu oluştur, tekrar döngü yap
         const confirmNew = confirm("🎉 Tüm setleri tamamladın! Yeni karışık setlerle devam etmek ister misin?");
         if (confirmNew) {
             sets = createSets();
@@ -579,21 +612,20 @@ function toggleMute() {
 }
 
 function goHome() {
-    // Ses durumu sıfırlama yok
     document.getElementById("quiz").classList.add("hidden");
     document.getElementById("result").classList.add("hidden");
     document.getElementById("home").classList.remove("hidden");
     waitingFlag = false;
-    // reset state
     currentSet = 0;
     currentIndex = 0;
     currentWrongs = [];
 }
 
-/* Sayfa yüklendiğinde home görünür, ses buton metnini güncelle */
+/* sayfa yüklendiğinde */
 document.addEventListener("DOMContentLoaded", () => {
     const muteBtn = document.getElementById("muteBtn");
     if (muteBtn) muteBtn.textContent = muted ? "🔇 Ses Aç" : "🔊 Sesi Kapat";
+    // statusText alanı başlangıçta boş ama sorun yok, quiz açılınca doldurulur.
 });
 </script>
 </body>

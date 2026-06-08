@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>Büyük Harflerin Yazımı – İnteraktif Etkinlik</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        background: linear-gradient(145deg, #2b3b4e 0%, #1d2c3a 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Segoe UI', 'Poppins', 'Roboto', sans-serif;
+        padding: 24px;
+    }
+
+    /* ana platform — renkli, canlı, geniş alan */
+    .app {
+        width: 100%;
+        max-width: 1100px;
+        min-width: 320px;
+        background: radial-gradient(ellipse at 20% 30%, #fef9e8, #fff2df);
+        border-radius: 56px;
+        box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255,255,240,0.6);
+        padding: 28px 32px 40px 32px;
+        backdrop-filter: blur(0px);
+        transition: all 0.2s ease;
+        border: 1px solid rgba(255,245,200,0.7);
+    }
+
+    /* Ekranın en az yarısını kaplaması için */
+    @media (min-width: 800px) {
+        .app {
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+    }
+
+    /* başlık: büyük harfli ve süslü */
+    .hero-title {
+        text-align: center;
+        font-size: 1.8rem;
+        letter-spacing: 1px;
+        margin: 0 0 12px 0;
+        background: linear-gradient(135deg, #b22234, #1e3c72, #f0a500);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        text-shadow: 2px 2px 6px rgba(0,0,0,0.1);
+        font-weight: 800;
+        word-break: keep-all;
+    }
+
+    @media (min-width: 600px) {
+        .hero-title {
+            font-size: 2.4rem;
+        }
+    }
+
+    .hero-sub {
+        text-align: center;
+        font-weight: 600;
+        background: #ffefc0;
+        display: inline-block;
+        width: auto;
+        margin: 0 auto 20px;
+        padding: 6px 18px;
+        border-radius: 60px;
+        color: #ab6f2c;
+        font-size: 1rem;
+        box-shadow: inset 0 -1px 0 #ffdd99, 0 3px 8px rgba(0,0,0,0.05);
+    }
+
+    /* iç kartlar renkli ve ferah */
+    .card-panel {
+        background: rgba(255, 253, 245, 0.96);
+        border-radius: 48px;
+        padding: 28px 24px;
+        margin-top: 12px;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15), inset 0 1px 0 white;
+        transition: transform 0.2s;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    h1, h2 {
+        font-weight: 700;
+        margin-top: 0;
+    }
+
+    .status-badge {
+        background: #1e466e;
+        color: #ffe8c7;
+        display: inline-block;
+        padding: 6px 20px;
+        border-radius: 40px;
+        font-size: 0.9rem;
+        font-weight: bold;
+        margin-bottom: 25px;
+        letter-spacing: 0.5px;
+    }
+
+    /* seçenekler — büyük butonlar, rahat okuma */
+    .option {
+        background: #fef7e0;
+        padding: 18px 20px;
+        border-radius: 50px;
+        border: 2px solid #ffe2aa;
+        cursor: pointer;
+        margin-bottom: 16px;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.02);
+        color: #2c2b26;
+        word-break: break-word;
+    }
+
+    .option:hover {
+        background: #fff3da;
+        border-color: #f7bc45;
+        transform: scale(1.01);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
+    }
+
+    .correct {
+        background: #b6e6b6 !important;
+        border-color: #2b6e2b !important;
+        color: #1a4d1a !important;
+        box-shadow: 0 0 0 2px #8bc34a inset;
+    }
+
+    .wrong {
+        background: #ffcfcf !important;
+        border-color: #b00020 !important;
+        color: #8b0000 !important;
+        text-decoration: none;
+    }
+
+    .btn {
+        background: #ff9f4b;
+        color: #2d2418;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 60px;
+        cursor: pointer;
+        margin-top: 12px;
+        margin-right: 14px;
+        font-size: 1rem;
+        font-weight: bold;
+        transition: 0.15s;
+        box-shadow: 0 5px 0 #b4621a;
+        transform: translateY(-2px);
+    }
+
+    .btn:active {
+        transform: translateY(2px);
+        box-shadow: 0 1px 0 #b4621a;
+    }
+
+    .btn-secondary {
+        background: #3c5a7d;
+        box-shadow: 0 5px 0 #1f3a54;
+        color: white;
+    }
+
+    .btn-mute {
+        background: #5f6c7a;
+        box-shadow: 0 5px 0 #3a4450;
+        color: white;
+    }
+
+    .btn:hover {
+        filter: brightness(1.02);
+    }
+
+    #options {
+        margin: 25px 0 20px;
+    }
+
+    .report-box {
+        background: #e9f2f5;
+        padding: 20px;
+        border-radius: 40px;
+        text-align: center;
+        font-size: 1.2rem;
+        margin: 20px 0;
+        font-weight: 500;
+    }
+
+    .flex-btns {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 10px;
+    }
+
+    footer {
+        text-align: center;
+        margin-top: 25px;
+        font-size: 0.75rem;
+        color: #9b8e6e;
+    }
+
+    @media (max-width: 550px) {
+        .app {
+            padding: 20px 18px;
+        }
+        .option {
+            padding: 14px 18px;
+            font-size: 0.95rem;
+        }
+        .btn {
+            padding: 10px 18px;
+            font-size: 0.85rem;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="app">
+    <!-- EN ÜSTTE BÜYÜK HARFLERLE YAZI (HER ZAMAN GÖRÜNÜR) -->
+    <div style="text-align: center; margin-bottom: 12px;">
+        <div class="hero-title">📘 BÜYÜK HARFLERİN KULLANIMI 📘</div>
+        <div class="hero-sub">🎯 İNTERAKTİF ETKİNLİK 🎯</div>
+    </div>
+
+    <!-- ANA SAYFA (HOME) -->
+    <div id="home">
+        <div class="card-panel" style="background: linear-gradient(120deg, #fff8e7, #fffbee);">
+            <h2 style="color:#a55117; margin-bottom: 18px;">✨ Merhaba! ✨</h2>
+            <p style="font-size: 1.1rem; line-height: 1.4;">Her soruda <strong>doğru yazılmış</strong> cümleyi seç. <br>
+            Büyük harflerin doğru kullanımı pekiştir! 🌟</p>
+            <div style="height: 20px;"></div>
+            <button class="btn" onclick="start()">🚀 BAŞLA & ÖĞREN</button>
+        </div>
+        <footer>⭐ Renkli platform | Türkçe kurallarına göre</footer>
+    </div>
+
+    <!-- SORU EKRANI (QUİZ) -->
+    <div id="quiz" class="hidden">
+        <div class="card-panel" style="background: #fffcf2;">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap;">
+                <div class="status-badge" id="status">Soru 0 / 0</div>
+                <button id="muteBtn" class="btn btn-mute" style="margin:0;" onclick="toggleMute()">🔊 Sesi Kapat</button>
+            </div>
+            <div id="options" style="margin-top: 20px;"></div>
+            <div class="flex-btns">
+                <button class="btn btn-secondary" onclick="goHome()">🏠 Ana Sayfa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SONUÇ EKRANI (RESULT) -->
+    <div id="result" class="hidden">
+        <div class="card-panel" style="background: #faf3e0;">
+            <h2 style="color:#c26b2e;">📊 Set Tamamlandı 🎉</h2>
+            <div id="report" class="report-box"></div>
+            <div class="flex-btns">
+                <button class="btn" onclick="retryWrongs()">🔄 Yanlışları Tekrar Çöz</button>
+                <button class="btn" onclick="nextSet()">➡️ Sonraki Set</button>
+                <button class="btn btn-secondary" onclick="goHome()">🏠 Ana Sayfa</button>
+            </div>
+        </div>
+        <footer>📖 Büyük harf kuralları eğlenceli öğrenme</footer>
+    </div>
+</div>
+
+<script>
+/* ---------------------------------------------------
+   WEB AUDIO SES
+--------------------------------------------------- */
+let muted = false;
+let audioCtx = null;
+
+function initAudio() {
+    if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AC();
+    }
+}
+
+function beep(freq, duration) {
+    if (muted) return;
+    try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.frequency.value = freq;
+        osc.type = "sine";
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+        osc.start(now);
+        osc.stop(now + duration);
+    } catch(e) { /* sessiz hata */ }
+}
+
+function playDing() { beep(880, 0.15); }
+function playDong() { beep(220, 0.2); }
+
+/* ---------------------------------------------------
+   DOĞRU & YANLIŞ CÜMLELER (30 eşleşme)
+--------------------------------------------------- */
+const correctList = [
+"<b>Zeynep Hanım</b> bir şey bilmediğini söyledi.",
+"Konya, <b>İç Anadolu’da</b> bulunur.",
+"Bu fareyi <b>Minnoş’tan</b> başkası yakalayamaz.",
+"<b>İstanbul Boğazı’ndan</b> gemiler geçti.",
+"<b>Türk Dili dergisine</b> abone olacakmış.",
+"Ben <b>20 Mayıs 1990 Pazar günü</b> dünyaya gelmişim.",
+"<b>İzmir’in kuzeyine</b> kar geliyormuş.",
+"İnsanlar, <b>Doğu felsefesine</b> ilgi duyuyor.",
+"Dün ilk defa <b>Ankara kedisi</b> gördüm.",
+"<b>Tuz Gölü</b> en büyük gölümüzdür.",
+"TBMM her yıl <b>1 Ekim’de</b> toplanır.",
+"<b>Erzurum Kalesi</b> görülmeye değer bir yerdir.",
+"<b>Beşiktaş Meydanı’nda</b> eylem yapıldı.",
+"<b>Türk Hava Yolları</b> bu yıl çok kâr etti.",
+"Okullar <b>eylülün</b> ikinci haftası açılır.",
+"Evimiz <b>Atatürk Caddesi’nde</b> bulunuyor.",
+"<b>30 Haziran Cumartesi</b> günü bize gelmişti.",
+"Kaza, <b>Antalya ili</b> sınırları içinde olmuş.",
+"<b>Mars da Jüpiter de</b> kendi yörüngesindedir.",
+"<b>Ay, Dünya’nın</b> uydusudur.",
+"<b>İsmail Çavuş</b> birçok savaşa katılmış.",
+"Bu yıl <b>Kasım’ın 15’inde</b> gelecekmiş Fransa’dan.",
+"<b>Gümüşhane ilçesine</b> gelen turistler gittiler.",
+"Tabelada <b>“Metro Durağı”</b> yazılıydı.",
+"<b>Güneydoğu Anadolu’ya</b> kar çoktan yağmış.",
+"<b>Isparta Gül Festivali</b> 10 Temmuz’da başlayacak.",
+"Bugün <b>Doktor Burak Bey</b> raporluymuş.",
+"<b>Mehmet Efendi</b> toplantıyı hızlıca terk etti.",
+"<b>Gazi Ortaokulu’nda</b> okuyorum.",
+"<b>Dicle Nehri</b>, türkülere konu olmuştur."
+];
+
+const wrongList = [
+"<b>Vali Murat bey</b> henüz gelmedi.",
+"Geçen hafta sizin pastanede <b>Maraş Dondurması</b> yedik.",
+"<b>\"Kuyucaklı Yusuf\"</b> Romanını okudun mu?",
+"Yörükler, <b>Akdeniz’in Güney’ind</b>e yaşıyor.",
+"Seni <b>Hasan Amcam</b> soruyordu.",
+"<b>Kayseri Pastırması</b> oldukça kaliteli.",
+"Önümüzdeki hafta <b>Çarşamba günü</b> görüşürüz.",
+"<b>“Babalar günü”</b> diye bir gün ne zamandan beri kutlanıyor?",
+"<b>Ali Dayım’a</b> çay içmeye gideceğiz.",
+"Burada <b>15 Ocak pazartesi Günü</b> tören varmış.",
+"Markette <b>Hürriyet Gazetesi</b> kalmamış.",
+"Onun da <b>Dünya kadar</b> işi varmış.",
+"Dün <b>avukat Serkan Bey'i</b> gördüm.",
+"Pastanın üzerine <b>Hindistan Cevizi</b> koymuş.",
+"Arkadaşım, <b>Güler sokakta</b> beni bekliyor.",
+"<b>Afyon Lokumu</b> çok lezzetli olur.",
+"Onlar her <b>Perşembe</b> yemeği bizim evde yerler.",
+"Ben de bu yıl <b>Ağustos’ta</b> tatile çıkacağım.",
+"<b>Türk Milleti</b> gerçekten çalışkandır.",
+"<b>İzmir’in Kuzeyinde</b> plansız yapılaşma var.",
+"<b>Kurban bayramında</b> çok para toplamış.",
+"<b>Fatma nine</b>, Kurtuluş Savaşı’nda savaşmış.",
+"<b>Ağrı dağı</b>, ihtişamıyla karşımızda duruyor.",
+"Onunla <b>20 Eylül 2018 salı</b> günü tanıştık.",
+"<b>Akçakoca Köyü’nde</b> iki kişi kaybolmuş.",
+"Odası hiç <b>Güneş</b> almayan cephedeymiş.",
+"En küçük gezegen <b>Plüton Gezegeni’ymiş</b>.",
+"<b>23 nisan 1920’te</b> Ankara’da Büyük Millet Meclisi açıldı.",
+"<b>Taşköprü Sarımsağı</b> çok kaliteli bir sarımsaktır.",
+"<b>Amasya Elması</b> yurt dışına gönderilmeye başlanmış."
+];
+
+/* 30 çift oluştur */
+let pairs = [];
+for (let i = 0; i < 30; i++) {
+    pairs.push([
+        { text: correctList[i], correct: true },
+        { text: wrongList[i], correct: false }
+    ]);
+}
+
+/* SET YAPISI */
+let sets = [];         // her set = soru dizisi ( her soru = [doğru, yanlış] )
+let currentSet = 0;
+let currentIndex = 0;
+let currentWrongs = [];   // yanlış yapılan soru objeleri (soru dizisi, hangi cümle? yanlış seçilen opsiyon)
+let currentSetQuestions = []; // set içindeki sorular (pair array)
+let waitingFlag = false;
+
+/* ---------------------------------------------------
+   SET OLUŞTUR (8'erli)
+--------------------------------------------------- */
+function createSets() {
+    const shuffledPairs = [...pairs];
+    for (let i = shuffledPairs.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledPairs[i], shuffledPairs[j]] = [shuffledPairs[j], shuffledPairs[i]];
+    }
+    const newSets = [];
+    for (let i = 0; i < shuffledPairs.length; i += 8) {
+        newSets.push(shuffledPairs.slice(i, i + 8));
+    }
+    return newSets;
+}
+
+/* BAŞLAT */
+function start() {
+    document.getElementById("home").classList.add("hidden");
+    document.getElementById("quiz").classList.remove("hidden");
+    document.getElementById("result").classList.add("hidden");
+    
+    sets = createSets();
+    currentSet = 0;
+    loadSet();
+}
+
+function loadSet() {
+    if (currentSet >= sets.length) {
+        // tüm setler bitmişse başa dön ama bildir
+        alert("🎉 Tüm setleri tamamladınız! Ana menüden tekrar başlayabilirsiniz.");
+        goHome();
+        return;
+    }
+    currentSetQuestions = sets[currentSet];
+    currentIndex = 0;
+    currentWrongs = [];
+    renderCurrentQuestion();
+}
+
+function renderCurrentQuestion() {
+    if (!currentSetQuestions || currentIndex >= currentSetQuestions.length) {
+        finishCurrentSet();
+        return;
+    }
+    const pair = currentSetQuestions[currentIndex];
+    const total = currentSetQuestions.length;
+    document.getElementById("status").innerHTML = `📌 Soru ${currentIndex + 1} / ${total}`;
+    
+    const optionsDiv = document.getElementById("options");
+    optionsDiv.innerHTML = "";
+    
+    // karıştır doğru/yanlış sırası
+    const shuffled = [...pair];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const r = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[r]] = [shuffled[r], shuffled[i]];
+    }
+    
+    shuffled.forEach(opt => {
+        const div = document.createElement("div");
+        div.className = "option";
+        div.innerHTML = opt.text;
+        div.onclick = () => handleAnswer(div, opt, pair);
+        optionsDiv.appendChild(div);
+    });
+}
+
+function handleAnswer(clickedDiv, selectedOption, originalPair) {
+    if (waitingFlag) return;
+    waitingFlag = true;
+    
+    if (selectedOption.correct) {
+        // doğru cevap
+        clickedDiv.classList.add("correct");
+        playDing();
+        setTimeout(() => {
+            waitingFlag = false;
+            currentIndex++;
+            renderCurrentQuestion();
+        }, 700);
+    } else {
+        // yanlış cevap
+        clickedDiv.classList.add("wrong");
+        playDong();
+        // Yanlış yapılan soruyu kaydet (sorunun kendisini)
+        currentWrongs.push(originalPair);
+        
+        // Doğru cevabı bul ve işaretle
+        const correctOption = originalPair.find(opt => opt.correct === true);
+        let correctDiv = null;
+        const allOptions = document.querySelectorAll(".option");
+        for (let divEl of allOptions) {
+            if (divEl.innerHTML === correctOption.text) {
+                correctDiv = divEl;
+                break;
+            }
+        }
+        if (correctDiv) {
+            correctDiv.classList.add("correct");
+        }
+        
+        setTimeout(() => {
+            waitingFlag = false;
+            currentIndex++;
+            renderCurrentQuestion();
+        }, 1200);
+    }
+}
+
+function finishCurrentSet() {
+    document.getElementById("quiz").classList.add("hidden");
+    document.getElementById("result").classList.remove("hidden");
+    
+    const total = currentSetQuestions.length;
+    const wrongCount = currentWrongs.length;
+    const correctCount = total - wrongCount;
+    const percent = total === 0 ? 0 : Math.round((correctCount / total) * 100);
+    
+    let feedbackEmoji = "";
+    if (percent === 100) feedbackEmoji = "🏆 Mükemmel!";
+    else if (percent >= 70) feedbackEmoji = "🎉 Çok iyi!";
+    else feedbackEmoji = "📚 Tekrar dene, başaracaksın!";
+    
+    document.getElementById("report").innerHTML = `
+        <div style="font-size:1.3rem;">📊 ${feedbackEmoji}</div>
+        <p><strong>📝 Toplam soru:</strong> ${total}</p>
+        <p><strong>✅ Doğru sayısı:</strong> ${correctCount}</p>
+        <p><strong>❌ Yanlış sayısı:</strong> ${wrongCount}</p>
+        <p><strong>🎯 Başarı yüzdesi:</strong> %${percent}</p>
+        ${wrongCount > 0 ? '<span>⭐ Yanlışların listelendi, tekrar çözebilirsin.</span>' : '<span>🌟 Harikasın, hiç yanlışın yok!</span>'}
+    `;
+}
+
+/* YANLISLARI TEKRAR COZ */
+function retryWrongs() {
+    if (currentWrongs.length === 0) {
+        alert("✨ Hiç yanlışın yok! Yeni sete geçebilirsin.");
+        return;
+    }
+    // mevcut seti yanlış yapılan sorularla değiştir
+    const newSet = [...currentWrongs];
+    if (newSet.length === 0) return;
+    sets[currentSet] = newSet;
+    currentSetQuestions = newSet;
+    currentIndex = 0;
+    currentWrongs = [];
+    
+    document.getElementById("result").classList.add("hidden");
+    document.getElementById("quiz").classList.remove("hidden");
+    renderCurrentQuestion();
+}
+
+function nextSet() {
+    currentSet++;
+    if (currentSet >= sets.length) {
+        // yeni set yoksa yeni set havuzu oluştur, tekrar döngü yap
+        const confirmNew = confirm("🎉 Tüm setleri tamamladın! Yeni karışık setlerle devam etmek ister misin?");
+        if (confirmNew) {
+            sets = createSets();
+            currentSet = 0;
+            document.getElementById("result").classList.add("hidden");
+            document.getElementById("quiz").classList.remove("hidden");
+            loadSet();
+        } else {
+            goHome();
+        }
+        return;
+    }
+    document.getElementById("result").classList.add("hidden");
+    document.getElementById("quiz").classList.remove("hidden");
+    loadSet();
+}
+
+function toggleMute() {
+    muted = !muted;
+    const muteBtn = document.getElementById("muteBtn");
+    if (muteBtn) muteBtn.textContent = muted ? "🔇 Ses Aç" : "🔊 Sesi Kapat";
+}
+
+function goHome() {
+    // Ses durumu sıfırlama yok
+    document.getElementById("quiz").classList.add("hidden");
+    document.getElementById("result").classList.add("hidden");
+    document.getElementById("home").classList.remove("hidden");
+    waitingFlag = false;
+    // reset state
+    currentSet = 0;
+    currentIndex = 0;
+    currentWrongs = [];
+}
+
+/* Sayfa yüklendiğinde home görünür, ses buton metnini güncelle */
+document.addEventListener("DOMContentLoaded", () => {
+    const muteBtn = document.getElementById("muteBtn");
+    if (muteBtn) muteBtn.textContent = muted ? "🔇 Ses Aç" : "🔊 Sesi Kapat";
+});
+</script>
+</body>
+</html>
